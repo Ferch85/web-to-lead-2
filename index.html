@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partial Event W2L  with Async Captcha11</title>
-	 <style>
+    <title>Partial Event W2L with Stable Captcha</title>
+    <style>
         body {
             font-family: Roboto;
             background-color: #f9f9f9;
@@ -18,7 +18,7 @@
             padding: 20px;
             max-width: 650px;
             margin: auto; 
-	    padding-bottom: 50px;
+            padding-bottom: 50px;
         }
         label {
             display: block;
@@ -30,7 +30,7 @@
             margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
-	    box-sizing: border-box;
+            box-sizing: border-box;
         }
         input[type="submit"] {
             background-color: #000000;
@@ -39,30 +39,66 @@
             border-radius: 4px;
             padding: 10px 15px;
             cursor: pointer;
-	    float: right;
+            float: right;
         }
         input[type="submit"]:hover {
             background-color: #000000;
         }
-	input[type="submit"]:disabled {
+        input[type="submit"]:disabled {
             background-color: #ccc;
             cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-<!--  ----------------------------------------------------------------------  -->
-<!--  NOTE: Please add the following <META> element to your page <HEAD>.      -->
-<!--  If necessary, please modify the charset parameter to specify the        -->
-<!--  character set of your HTML page.                                        -->
-<!--  ----------------------------------------------------------------------  -->
 
-<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=UTF-8">
+<form id="event-form" action="https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DO9000007wKVN" method="POST">
+    <!-- Web-to-Lead hidden fields -->
+    <input type="hidden" name="oid" value="00DO9000007wKVN">
+    <input type="hidden" name="retURL" value="https://www.chargefuze.com/">
+    <input type="hidden" id="recordType" name="recordType" value="012Dn000000vQWSIA2"> 
+    <input type="hidden" name="Lead_Category__c" value="Events"> 
+    <input type="hidden" name="Lead_Source_Type__c" value="Inbound">   
 
+    <!-- Lead fields -->
+    <label for="first_name">First Name</label>
+    <input id="first_name" maxlength="40" name="first_name" type="text" /><br>
 
+    <label for="last_name">Last Name</label>
+    <input id="last_name" maxlength="80" name="last_name" type="text" /><br>
+
+    <label for="phone">Phone</label>
+    <input id="phone" maxlength="40" name="phone" type="text" /><br>
+
+    <label for="email">Email</label>
+    <input id="email" maxlength="80" name="email" type="text" /><br>
+
+    <label for="company">Company</label>
+    <input id="company" maxlength="40" name="company" type="text" /><br>
+
+    <label for="url">Website</label>
+    <input id="url" maxlength="80" name="url" type="text" /><br>
+
+    Event Name<input id="00NO900000I9TA5" maxlength="255" name="00NO900000I9TA5" type="text" /><br>
+
+    Event Start Date<input id="00NDn00000uFndI" name="Event_Start_Date__c" type="text" placeholder="M/dd/yyyy" /><br>
+
+    Message<textarea id="00NPP000002NJX3" name="00NPP000002NJX3" rows="4" wrap="soft"></textarea><br>
+ 
+    <select id="lead_source" name="lead_source" style="display: none;" >
+        <option value="Website" selected>Website</option>
+    </select><br>
+
+    <!-- CAPTCHA container -->
+    <div id="recaptcha-container" class="g-recaptcha"></div>
+
+    <input type="submit" id="event-submit-button" disabled>
+</form>
+
+<!-- JQuery and Datepicker (igual que antes) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>	
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>    
 <script>   
   document.addEventListener("DOMContentLoaded", function () {
     $("#00NDn00000uFndI").datepicker({
@@ -70,95 +106,56 @@
     });
   });
 </script>
+
+<!-- reCAPTCHA stable rendering -->
 <script>
   let recaptchaToken = "";
 
-  // Called by reCAPTCHA when the user passes the challenge
   function onRecaptchaSuccess(token) {
     recaptchaToken = token;
     console.log("reCAPTCHA success. Token:", token);
 
-    // Check if input exists already
     let existingInput = document.querySelector("input[name='g-recaptcha-response']");
-    console.log("after input check" );
     if (!existingInput) {
-      console.log("input doesn't exist" );
       const input = document.createElement("input");
       input.type = "hidden";
       input.name = "g-recaptcha-response";
       input.value = token;
-      document.getElementById("event-form").appendChild(input);
-	console.log("input complete" );    
+      document.getElementById("event-form").appendChild(input); 
     } else {
-	    console.log("input exist" );
       existingInput.value = token;
     }
-    console.log("before activating", existingInput);
-    // Enable submit
     document.getElementById("event-submit-button").disabled = false;
   }
 
-  // Renders the reCAPTCHA
-  function onRecaptchaLoadCallback() {
-    grecaptcha.render("recaptcha-container", {
-      sitekey: "6LfXkPAqAAAAANq320dZoQxGW-tLW7hVAMiI55Aw",
-      callback: onRecaptchaSuccess
-    });
+  function renderCaptcha() {
+    if (typeof grecaptcha !== "undefined") {
+      grecaptcha.render("recaptcha-container", {
+        sitekey: "6LfXkPAqAAAAANq320dZoQxGW-tLW7hVAMiI55Aw",
+        callback: onRecaptchaSuccess
+      });
+    } else {
+      console.warn("grecaptcha not ready yet, retrying...");
+      setTimeout(renderCaptcha, 100);
+    }
   }
 
-  // Final check before submit
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("event-form");
+    renderCaptcha();
 
+    const form = document.getElementById("event-form");
     form.addEventListener("submit", function (e) {
       const tokenField = document.querySelector("input[name='g-recaptcha-response']");
       if (!tokenField || tokenField.value.trim() === "") {
         e.preventDefault();
         alert("Please complete the reCAPTCHA before submitting the form.");
-        console.error("Form blocked: No reCAPTCHA token found.");
       }
     });
   });
 </script>
-<script src="https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoadCallback&render=explicit" async defer></script>
-<!--  ----------------------------------------------------------------------  -->
-<!--  NOTE: Please add the following <FORM> element to your page.             -->
-<!--  ----------------------------------------------------------------------  -->
 
+<!-- Cargamos el reCAPTCHA SIN async/defer para mayor estabilidad -->
+<script src="https://www.google.com/recaptcha/api.js"></script>
 
-<form  id="event-form"  action="https://test.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8&orgId=00DO9000007wKVN" method="POST">
- <input type=hidden name='captcha_settings' value='{"keyname":"personalKeys","fallback":"true","orgId":"00DO9000007wKVN","ts":""}'>
-<input type=hidden name="oid" value="00DO9000007wKVN">
-<input type=hidden name="retURL" value="https://www.chargefuze.com/">
-<input type=hidden id="recordType" name="recordType" value="012Dn000000vQWSIA2"> 
-<input type=hidden  name="Lead_Category__c" value="Events"> 
-<input type=hidden  name="Lead_Source_Type__c" value="Inbound">   
-
-<label for="first_name">First Name</label><input  id="first_name" maxlength="40" name="first_name" size="20" type="text" /><br>
-
-<label for="last_name">Last Name</label><input  id="last_name" maxlength="80" name="last_name" size="20" type="text" /><br>
-
-<label for="phone">Phone</label><input  id="phone" maxlength="40" name="phone" size="20" type="text" /><br>
-
-<label for="email">Email</label><input  id="email" maxlength="80" name="email" size="20" type="text" /><br>
-
-<label for="company">Company</label><input  id="company" maxlength="40" name="company" size="20" type="text" /><br>
-
-<label for="url">Website</label><input  id="url" maxlength="80" name="url" size="20" type="text" /><br>
-
-Event Name<input  id="00NO900000I9TA5" maxlength="255" name="00NO900000I9TA5" size="20" type="text" /><br>
-
-Event Start Date<input  id="00NDn00000uFndI" name="Event_Start_Date__c" size="20" type="text"  placeholder="M/dd/yyyy"  /><br>
-
-Message<textarea  id="00NPP000002NJX3" name="00NPP000002NJX3" rows="4" type="text" wrap="soft"></textarea><br>
- 
-<select id="lead_source" name="lead_source" style="display: none;" >
-<option value="Website" selected>Website</option>
-</select><br>
-	
-<div id="recaptcha-container" class="g-recaptcha"></div>
-<input type="submit" name="submit"  id="event-submit-button" disabled>  
-
-</form>
 </body>
 </html>
